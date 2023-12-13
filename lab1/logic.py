@@ -6,20 +6,15 @@
 ##############################
 import numpy as np
 import warnings
-
-
-#Вычисление по Веберу
+from parser import *
 
 def countTNormRes(x, y):
-    tValues = np.linspace(-np.inf, np.inf, 1000)
-    tValues = np.where(tValues > 0, tValues, np.nan)
-    fValues = x * np.exp(tValues * np.log(y)) + y * np.exp(tValues * np.log(x))
-    limResult = np.max(fValues)
-    if limResult < 1:
-        return limResult
+    if(y == 1):
+        return x
+    elif(x == 1):
+        return y
     else:
-        return 1.0
-
+        return 0.0
 
 def countRes(x, y):
     if x == 1.0:
@@ -28,24 +23,21 @@ def countRes(x, y):
         return 1.0
 
 def findPredicate(A, B):
-    predicate = []
-
-    for i in A:
-        line = []
-        for j in B:
-            pair = []
-            res = countRes(i[1], j[1]) 
-            pair.append("<{}, {}>".format(i[0], j[0]))
-            pair.append(res)
-            line.append(pair)
-
-        predicate.append(line)
-
-    return predicate
+    variables = []
+    for var_a in A.my_list:
+        variable_line = [] 
+        for var_b in B.my_list:
+            variable = []
+            variable.append(var_a[0])
+            variable.append(var_b[0])
+            variable.append(countRes(var_a[1], var_b[1]))
+            variable_line.append(variable)
+        variables.append(variable_line)
+    return variables
 
 def findResultMatrix(matrix, C):
     resMatrix = []
-    matrixC = [i[1] for i in C]
+    matrixC = [i[1] for i in C.my_list]
 
     for i in range(len(matrixC)):
         line = [countTNormRes(matrixC[i], x) for x in matrix[i]]
@@ -56,22 +48,21 @@ def findResultMatrix(matrix, C):
 def findInference(multMatrix, B):
     inference = []
 
-    for i in range(len(B)):
+    for i in range(len(B.my_list)):
         column = []
         for j in range(len(multMatrix)):
             column.append(multMatrix[j][i])
-
-        inference.append([B[i][0], findMaxElement(column)])
+        inference.append([B.my_list[i][0], findMaxElement(column)])
 
     return inference
 
-def findMatrix(A, B, predicate):
+def findMatrix(predicate):
     matrix = []
 
-    for i in range(len(A)):
+    for i in range(len(predicate)):
         line = []
-        for j in range(len(B)):
-            line.append(predicate[i][j][1])
+        for j in range(len(predicate[i])):
+            line.append(predicate[i][j][len(predicate[i][j]) - 1])
         matrix.append(line)
 
     return matrix
@@ -90,21 +81,22 @@ def printList(name, lst):
     for i in lst:
         print(i)
 
-def solution(A, B, C, inferenceArr):
+def solution(A, B, C, name_for_new_predicate):
     predicate = findPredicate(A, B)
-    print("\nPredicate:")
     for i in predicate:
-        print(", ".join([f"<{item[0]}, {item[1]}>" for item in i]))
+        print(i)
 
-    matrix = findMatrix(A, B, predicate)
-    printList("Matrix", matrix)
+    matrix = findMatrix(predicate)
+    #printList("Matrix", matrix)
 
     resMatrix = findResultMatrix(matrix, C)
-    printList("Result matrix", resMatrix)
+    #printList("Result matrix", resMatrix)
 
     inference = findInference(resMatrix, B)
 
-    inferenceArr.append(inference)
-
     print("\nInference:")
     print("{" + ", ".join([f"<{item[0]}, {item[1]}>" for item in inference]) + "}")
+
+    predicateToAdd = FuzzySet(name_for_new_predicate, inference)
+
+    return predicateToAdd

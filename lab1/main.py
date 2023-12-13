@@ -8,49 +8,81 @@
 import sys
 import time
 import re
-from source.parser import *
-from source.logic import *
+from parser import *
+from logic import *
 import warnings
 
-warnings.filterwarnings("ignore", category=RuntimeWarning)
-timeout_seconds = 3  
-start_time = time.time()
 
-inferenceArr = []
+[fuzzy_sets, rules] = readFile("data.txt")
+numOfAddableSet = 0
 doneInferenceArr = []
 
-[parcels, rules] = readFile('data.txt')
 
-for parcel in parcels:
-    inferenceArr.append(parcel['list'])
+def find_fuzzy_sets_for_rule(fuzzy_sets, rule):
+	fuzzy_set_1 = FuzzySet("", [])
+	fuzzy_set_2 = FuzzySet("", [])
+	for fuzzy_set in fuzzy_sets:
+		if fuzzy_set.name == rule[0]:
+			fuzzy_set_1 = fuzzy_set
+			break
+	for fuzzy_set in fuzzy_sets:
+		if fuzzy_set.name == rule[1]:
+			fuzzy_set_2 = fuzzy_set
+			break
+
+	return fuzzy_set_1, fuzzy_set_2
+
+def check_parcel_usability(parcel, predicateA):
+	if parcel.my_list[0][0] == predicateA.my_list[0][0]:
+		if parcel.name == predicateA.name:
+			return False
+		else:
+			return True
+	else:
+		return False
+
+numOfAddableSet = 0
+usedRules = []
+
+def data_output(predicateA, predicateB, parcel):
+	print("\n" + '-' * 50)
+	print('Predicate_1: ' + predicateA.name + str(predicateA.my_list))
+	print("Predicate_2: " + predicateB.name + str(predicateB.my_list))
+	print("Parcel: " + parcel.name + str(parcel.my_list))
+
+def parcel_cycle(fuzzy_sets, rules, anyOutput):
+	used_Rules = []
+	for parcel in fuzzy_sets:
+		if parcel not in doneInferenceArr:
+			new_parcels = []
+			[used_Rules, anyOutput, new_parcels] = rule_cycle(rules, used_Rules, parcel, anyOutput)			
+			for p in new_parcels:
+				fuzzy_sets.append(p)
+			doneInferenceArr.append(parcel)	
+	anyOutput = 0
+	return anyOutput, fuzzy_sets, rules
+
+def rule_cycle(rules, usedRules, parcel, anyOutput):
+	new_parcels = []
+	for rule in rules:
+		if rule not in usedRules:
+			[predicateA,predicateB] = find_fuzzy_sets_for_rule(fuzzy_sets, rule)  
+			if check_parcel_usability(parcel, predicateA):
+				usedRules.append(rule)
+				anyOutput = 1
+				data_output(predicateA, predicateB, parcel)
+				global numOfAddableSet
+				new_parcels.append(solution(predicateA, predicateB, parcel, 'Y' + str(numOfAddableSet)))
+				numOfAddableSet = numOfAddableSet + 1
+	return usedRules, anyOutput, new_parcels
 
 
-while True:
-    C = inferenceArr[0]
-    if C not in doneInferenceArr:
-        for rule in rules:
-            predicateA = [item for sublist in [item['list'] for item in parcels if item['name'] == rule[0]] for item in sublist]
-            predicateB = [item for sublist in [item['list'] for item in parcels if item['name'] == rule[1]] for item in sublist]
-            wrongC = False
-            for j, value in enumerate(predicateA):
-                if len(predicateA) == len(C):
-                    if predicateA[j][0] != C[j][0]:
-                        wrongC = True
-                else:
-                    wrongC = True
-            if not wrongC:
-                print("\n" + str(rule[0]) + " = " + "{" + ", ".join([f"<{item[0]}, {item[1]}>" for item in predicateA]) + "}")
-                print(str(rule[1]) + " = " + "{" + ", ".join([f"<{item[0]}, {item[1]}>" for item in predicateB]) + "}")
-                print("Parcel = " + "{" + ", ".join([f"<{item[0]}, {item[1]}>" for item in C]) + "}")
-                solution(predicateA, predicateB, C, inferenceArr)
-                print("\n" + '-' * 50)
-                
+anyOutput = 1
+while anyOutput == 1:
+	[anyOutput, fuzzy_sets, rules] = parcel_cycle(fuzzy_sets, rules, anyOutput)
 
-            inferenceArr = [value for value in inferenceArr if value != C]
-            doneInferenceArr.append(C)
 
-    current_time = time.time()
-    elapsed_time = current_time - start_time
 
-    if elapsed_time > timeout_seconds:
-        break
+
+
+

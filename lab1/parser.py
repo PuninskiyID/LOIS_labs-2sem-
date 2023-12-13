@@ -56,4 +56,29 @@ def readFile(filePath: str):
                 item = parseRule(line)
                 if item is not None:
                     rules.append(item)
-    return parcels, rules
+    return get_fuzzy_sets(parcels), rules
+
+class FuzzySet:
+    def __init__(self, name, my_list):
+        self.name = name
+        self.my_list = my_list
+
+    def display_info(self):
+        print(f"Name: {self.name}")
+        print("List:")
+        for item in self.my_list:
+            print(f"  {item[0]}: {item[1]}")
+
+def parse_to_fuzzy_set(data):
+    instances = []
+    for entry in data:
+        name = entry['name']
+        my_list = entry['list']
+        instance = FuzzySet(name, my_list)
+        instances.append(instance)
+    return instances
+
+
+def get_fuzzy_sets(data):
+    set_of_fuzzy_sets = parse_to_fuzzy_set(data)
+    return set_of_fuzzy_sets
