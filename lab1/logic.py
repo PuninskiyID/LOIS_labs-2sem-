@@ -83,14 +83,14 @@ def printList(name, lst):
 
 def solution(A, B, C, name_for_new_predicate):
     predicate = findPredicate(A, B)
-    for i in predicate:
-        print(i)
+    #for i in predicate:
+    #    print(i)
 
     matrix = findMatrix(predicate)
-    #printList("Matrix", matrix)
+    printList("Matrix", matrix)
 
     resMatrix = findResultMatrix(matrix, C)
-    #printList("Result matrix", resMatrix)
+    printList("Result matrix", resMatrix)
 
     inference = findInference(resMatrix, B)
 

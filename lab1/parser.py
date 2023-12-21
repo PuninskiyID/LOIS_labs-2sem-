@@ -16,47 +16,47 @@ def parseRule(rule: str):
 
     return None
 
-def parseParcel(parcel: str):
+def parsePremise(premise: str):
     generalPattern = r'^[A-Z][0-9]*=\{<([a-z]+\d*),(1\.0|0\.\d+)>((,<([a-z]+\d*),(1\.0|0\.\d+)>)*)\}$'
 
-    if not bool(re.match(generalPattern, parcel)):
+    if not bool(re.match(generalPattern, premise)):
         return None
 
     groupPattern = r'^([A-Z0-9]+)=\{(.+?)\}$'
-    match = re.match(groupPattern, parcel)
+    match = re.match(groupPattern, premise)
 
     if match:
         name = match.group(1)
         pairs = re.findall(r'<([a-z]+\d*),(1\.0|0\.\d+)>', match.group(2))
 
         nameSet = set()
-        parcelList = []
+        premiseList = []
         for pair in pairs:
             pairName = pair[0]
             if pairName in nameSet:
                 return None
             else:
                 nameSet.add(pairName)
-                parcelList.append([str(pairName), float(pair[1])])
+                premiseList.append([str(pairName), float(pair[1])])
 
-        return {'name': name, 'list': parcelList}
+        return {'name': name, 'list': premiseList}
 
     return None
 
 def readFile(filePath: str):
-    parcels = []
+    premises = []
     rules = []
     with open(filePath, 'r') as file:
         for line in file: 
             line = line.replace(" ", "").strip()
-            item = parseParcel(line)
+            item = parsePremise(line)
             if item is not None:
-                parcels.append(item)
+                premises.append(item)
             else:
                 item = parseRule(line)
                 if item is not None:
                     rules.append(item)
-    return get_fuzzy_sets(parcels), rules
+    return get_fuzzy_sets(premises), rules
 
 class FuzzySet:
     def __init__(self, name, my_list):
